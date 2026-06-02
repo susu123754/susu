@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="提醒助手">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192x192.svg">
+  <title>智能提醒助手</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input[type="datetime-local"],
+    select,
+    textarea,
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    input[type="datetime-local"]:focus,
+    select:focus,
+    textarea:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .reminder-options {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .option-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-weight: 600;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .reminder-list {
+      margin-top: 20px;
+    }
+
+    .reminder-item {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-left: 5px solid #667eea;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .reminder-item:hover {
+      transform: translateX(5px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .reminder-item.disabled {
+      opacity: 0.6;
+      border-left-color: #ccc;
+    }
+
+    .reminder-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .reminder-title {
+      font-weight: 600;
+      font-size: 18px;
+      color: #333;
+    }
+
+    .reminder-time {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .reminder-content {
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .reminder-meta {
+      display: flex;
+      gap: 15px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .reminder-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      background: #ccc;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle-switch.on {
+      background: #667eea;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch.on::after {
+      left: 24px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-active {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .badge-disabled {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .badge-triggered {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .tab.active {
+      background: white;
+      color: #667eea;
+    }
+
+    .tab:not(.active) {
+      background: rgba(255,255,255,0.2);
+      color: white;
+    }
+
+    .tab:not(.active):hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #333;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease;
+      z-index: 1000;
+    }
+
+    .stop-sound-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+      z-index: 9999;
+      display: none;
+    }
+
+    .stop-sound-btn:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
+    }
+
+    .stop-sound-btn.show {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 1s linear;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      .card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔔 智能提醒助手</h1>
+
+    <!-- 设置表单 -->
+    <div class="card">
+      <h2 style="margin-bottom: 20px; color: #333;">添加新提醒</h2>
+      
+      <div class="form-group">
+        <label for="reminder-title">提醒标题</label>
+        <input type="text" id="reminder-title" placeholder="请输入提醒标题">
+      </div>
+
+      <div class="form-group">
+        <label for="reminder-datetime">提醒时间</label>
+        <input type="datetime-local" id="reminder-datetime" required>
+      </div>
+
+      <div class="form-group">
+        <label for="reminder-offset">提前提醒</label>
+        <select id="reminder-offset">
+          <option value="0">准时提醒</option>
+          <option value="300">提前5分钟</option>
+          <option value="600">提前10分钟</option>
+          <option value="1800">提前30分钟</option>
+          <option value="3600">提前1小时</option>
+          <option value="7200">提前2小时</option>
+          <option value="86400">提前1天</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="reminder-content">提醒内容</label>
+        <textarea id="reminder-content" placeholder="请输入提醒内容（可选）"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>提醒方式</label>
+        <div class="reminder-options">
+          <div class="option-item">
+            <input type="checkbox" id="notify-system" checked>
+            <label for="notify-system">系统通知</label>
+          </div>
+          <div class="option-item">
+            <input type="checkbox" id="notify-sound" checked>
+            <label for="notify-sound">声音提醒</label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" onclick="addReminder()">添加提醒</button>
+    </div>
+
+    <!-- 关闭铃声按钮 -->
+    <button id="stop-sound-btn" class="stop-sound-btn" onclick="stopNotificationSound()">🔇 关闭铃声</button>
+
+    <!-- 标签切换 -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('active')">待提醒</div>
+      <div class="tab" onclick="switchTab('history')">提醒历史</div>
+    </div>
+
+    <!-- 待提醒列表 -->
+    <div id="active-tab" class="card">
+      <h2 style="margin-bottom: 20px; color: #333;">待提醒事项</h2>
+      <div id="reminder-list" class="reminder-list">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <p>暂无待提醒事项</p>
+          <p style="font-size: 14px; margin-top: 5px;">添加一个新的提醒开始吧！</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 历史记录 -->
+    <div id="history-tab" class="card" style="display: none;">
+      <h2 style="margin-bottom: 20px; color: #333;">提醒历史</h2>
+      <div id="history-list" class="reminder-list">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <p>暂无提醒历史</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</audio>
+
+  <script>
+    // 提醒数据模型
+    class Reminder {
+      constructor(data) {
+        this.id = data.id || Date.now().toString();
+        this.title = data.title || '';
+        this.datetime = data.datetime;
+        this.offset = data.offset || 0;
+        this.content = data.content || '';
+        this.enabled = data.enabled !== undefined ? data.enabled : true;
+        this.triggered = data.triggered || false;
+        this.notifySystem = data.notifySystem !== undefined ? data.notifySystem : true;
+        this.notifySound = data.notifySound !== undefined ? data.notifySound : true;
+        this.createdAt = data.createdAt || Date.now();
+        this.triggeredAt = data.triggeredAt || null;
+      }
+
+      get actualRemindTime() {
+        return new Date(this.datetime) - this.offset * 1000;
+      }
+
+      get isPast() {
+        return this.actualRemindTime < Date.now();
+      }
+
+      get status() {
+        if (this.triggered) return 'triggered';
+        if (!this.enabled) return 'disabled';
+        return 'active';
+      }
+    }
+
+    // 存储模块
+    const STORAGE_KEY = 'smart-reminders';
+    const HISTORY_KEY = 'smart-reminders-history';
+
+    function saveReminders(reminders) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(reminders));
+    }
+
+    function loadReminders() {
+      try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data).map(r => new Reminder(r)) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveHistory(history) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    }
+
+    function loadHistory() {
+      try {
+        const data = localStorage.getItem(HISTORY_KEY);
+        return data ? JSON.parse(data).map(r => new Reminder(r)) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    let reminders = [];
+    let history = [];
+    let checkInterval = null;
+    let currentAudioContext = null;
+    let currentOscillators = [];
+
+    // 初始化
+    function init() {
+      reminders = loadReminders();
+      history = loadHistory();
+      updateUI();
+      startChecker();
+      // 设置默认日期时间为当前时间之后
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 5);
+      document.getElementById('reminder-datetime').value = formatDateTime(now);
+    }
+
+    function formatDateTime(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    // 添加提醒
+    function addReminder() {
+      const title = document.getElementById('reminder-title').value.trim();
+      const datetime = document.getElementById('reminder-datetime').value;
+      const offset = parseInt(document.getElementById('reminder-offset').value);
+      const content = document.getElementById('reminder-content').value.trim();
+      const notifySystem = document.getElementById('notify-system').checked;
+      const notifySound = document.getElementById('notify-sound').checked;
+
+      if (!title) {
+        showNotification('请输入提醒标题');
+        return;
+      }
+
+      if (!datetime) {
+        showNotification('请选择提醒时间');
+        return;
+      }
+
+      const reminder = new Reminder({
+        title,
+        datetime: new Date(datetime).toISOString(),
+        offset,
+        content,
+        notifySystem,
+        notifySound
+      });
+
+      reminders.push(reminder);
+      saveReminders(reminders);
+      updateUI();
+
+      // 重置表单
+      document.getElementById('reminder-title').value = '';
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 5);
+      document.getElementById('reminder-datetime').value = formatDateTime(now);
+      document.getElementById('reminder-content').value = '';
+
+      showNotification('提醒已添加');
+    }
+
+    // 删除提醒
+    function deleteReminder(id) {
+      reminders = reminders.filter(r => r.id !== id);
+      saveReminders(reminders);
+      updateUI();
+      showNotification('提醒已删除');
+    }
+
+    // 切换启用状态
+    function toggleReminder(id) {
+      const reminder = reminders.find(r => r.id === id);
+      if (reminder) {
+        reminder.enabled = !reminder.enabled;
+        saveReminders(reminders);
+        updateUI();
+      }
+    }
+
+    // 触发提醒
+    function triggerReminder(reminder) {
+      // 播放声音
+      if (reminder.notifySound) {
+        playNotificationSound();
+      }
+
+      // 系统通知
+      if (reminder.notifySystem && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          showSystemNotification(reminder);
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              showSystemNotification(reminder);
+            }
+          });
+        }
+      }
+
+      // 显示网页通知
+      showNotification(`🔔 ${reminder.title}\n${reminder.content || ''}`);
+
+      // 移动到历史记录
+      reminder.triggered = true;
+      reminder.triggeredAt = Date.now();
+      history.unshift(reminder);
+      
+      // 只保留最近100条历史
+      if (history.length > 100) {
+        history = history.slice(0, 100);
+      }
+      
+      reminders = reminders.filter(r => r.id !== reminder.id);
+      saveReminders(reminders);
+      saveHistory(history);
+      updateUI();
+    }
+
+    // 播放欢快的提示音（持续30秒）
+    function playNotificationSound() {
+      try {
+        // 先停止之前的声音
+        stopNotificationSound();
+        
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        currentAudioContext = new AudioContext();
+        const duration = 30; // 持续30秒
+        const startTime = currentAudioContext.currentTime;
+        
+        // 欢快的旋律：上行音阶，使用明亮的音色
+        // C大调上行音阶：C5(523), D5(587), E5(659), F5(698), G5(784), A5(880), B5(988), C6(1047)
+        const happyMelody = [523, 587, 659, 698, 784, 880, 988, 1047];
+        // 和弦伴奏
+        const chords = [
+          [523, 659, 784],   // C大三和弦
+          [659, 784, 1047],  // E小三和弦
+          [698, 880, 1047],  // F大三和弦
+          [784, 988, 1245]   // G大三和弦
+        ];
+        
+        let noteIndex = 0;
+        
+        // 创建主旋律振荡器（使用明亮的square波形）
+        const melodyOsc = currentAudioContext.createOscillator();
+        const melodyGain = currentAudioContext.createGain();
+        melodyOsc.connect(melodyGain);
+        melodyGain.connect(currentAudioContext.destination);
+        melodyOsc.type = 'square'; // 明亮的方波
+        
+        // 创建和弦振荡器（使用柔和的triangle波形）
+        const chordOscs = [];
+        const chordGains = [];
+        chords[0].forEach((freq, idx) => {
+          const osc = currentAudioContext.createOscillator();
+          const gain = currentAudioContext.createGain();
+          osc.connect(gain);
+          gain.connect(currentAudioContext.destination);
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+          chordOscs.push(osc);
+          chordGains.push(gain);
+        });
+        
+        // 设置欢快的节奏：快速音符，0.2秒一个
+        const noteDuration = 0.2;
+        const pauseDuration = 0.1;
+        const totalCycle = noteDuration + pauseDuration;
+        
+        // 安排旋律和和弦播放
+        for (let t = 0; t < duration; t += totalCycle) {
+          const currentTime = startTime + t;
+          
+          // 设置当前音符频率（循环播放上行音阶）
+          const freq = happyMelody[noteIndex % happyMelody.length];
+          melodyOsc.frequency.setValueAtTime(freq, currentTime);
+          
+          // 设置音量包络
+          melodyGain.gain.setValueAtTime(0, currentTime);
+          melodyGain.gain.linearRampToValueAtTime(0.5, currentTime + 0.01);
+          melodyGain.gain.linearRampToValueAtTime(0.4, currentTime + noteDuration * 0.5);
+          melodyGain.gain.linearRampToValueAtTime(0, currentTime + noteDuration);
+          
+          // 每4个音符换一次和弦
+          const chordIndex = Math.floor(noteIndex / 4) % chords.length;
+          if (noteIndex % 4 === 0) {
+            chordOscs.forEach((osc, idx) => {
+              osc.frequency.setValueAtTime(chords[chordIndex][idx % chords[chordIndex].length], currentTime);
+              chordGains[idx].gain.setValueAtTime(0, currentTime);
+              chordGains[idx].gain.linearRampToValueAtTime(0.15, currentTime + 0.02);
+            });
+          }
+          
+          noteIndex++;
+        }
+        
+        // 开始播放
+        melodyOsc.start(startTime);
+        melodyOsc.stop(startTime + duration);
+        chordOscs.forEach((osc, idx) => {
+          osc.start(startTime);
+          osc.stop(startTime + duration);
+        });
+        
+        // 保存引用以便停止
+        currentOscillators.push({ oscillator: melodyOsc, gainNode: melodyGain });
+        chordOscs.forEach((osc, idx) => {
+          currentOscillators.push({ oscillator: osc, gainNode: chordGains[idx] });
+        });
+        
+        // 显示关闭按钮
+        document.getElementById('stop-sound-btn').classList.add('show');
+        
+        // 播放完毕后自动关闭
+        setTimeout(() => {
+          stopNotificationSound();
+        }, duration * 1000);
+      } catch (error) {
+        console.error('播放提示音失败:', error);
+      }
+    }
+    
+    // 停止提示音
+    function stopNotificationSound() {
+      try {
+        // 停止所有振荡器
+        currentOscillators.forEach(item => {
+          try {
+            item.gainNode.gain.cancelScheduledValues(0);
+            item.gainNode.gain.setValueAtTime(0, currentAudioContext?.currentTime || 0);
+            item.oscillator.stop();
+          } catch (e) {}
+        });
+        currentOscillators = [];
+        
+        // 关闭音频上下文
+        if (currentAudioContext) {
+          currentAudioContext.close().catch(() => {});
+          currentAudioContext = null;
+        }
+        
+        // 隐藏关闭按钮
+        document.getElementById('stop-sound-btn').classList.remove('show');
+      } catch (error) {
+        console.error('停止提示音失败:', error);
+      }
+    }
+
+    // 显示系统通知
+    function showSystemNotification(reminder) {
+      new Notification(reminder.title, {
+        body: reminder.content || '提醒时间到了！',
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+        requireInteraction: true
+      });
+    }
+
+    // 显示网页通知
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.className = 'notification';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+
+    // 定时检查提醒
+    function startChecker() {
+      if (checkInterval) clearInterval(checkInterval);
+      
+      checkInterval = setInterval(() => {
+        const now = Date.now();
+        
+        reminders.forEach(reminder => {
+          if (reminder.enabled && !reminder.triggered && reminder.actualRemindTime <= now) {
+            triggerReminder(reminder);
+          }
+        });
+        
+        // 清理已过期但未触发的提醒（可能是应用关闭时错过的）
+        reminders = reminders.filter(r => !r.isPast || !r.enabled);
+        saveReminders(reminders);
+        
+        updateUI();
+      }, 1000);
+    }
+
+    // 更新UI
+    function updateUI() {
+      renderReminderList();
+      renderHistoryList();
+    }
+
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
+      
+      // 今天的时间
+      if (date.toDateString() === now.toDateString()) {
+        return '今天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      }
+      
+      // 昨天
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (date.toDateString() === yesterday.toDateString()) {
+        return '昨天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      }
+      
+      return date.toLocaleString('zh-CN', { 
+        month: '2-digit', 
+        day: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    }
+
+    function getOffsetText(offset) {
+      if (offset === 0) return '准时';
+      if (offset < 60) return `提前${offset}秒`;
+      if (offset < 3600) return `提前${Math.floor(offset / 60)}分钟`;
+      if (offset < 86400) return `提前${Math.floor(offset / 3600)}小时`;
+      return `提前${Math.floor(offset / 86400)}天`;
+    }
+
+    function getCountdown(reminder) {
+      const diff = reminder.actualRemindTime - Date.now();
+      if (diff <= 0) return '即将提醒';
+      
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      if (days > 0) return `${days}天${hours}小时后`;
+      if (hours > 0) return `${hours}小时${minutes}分钟后`;
+      if (minutes > 0) return `${minutes}分钟${seconds}秒后`;
+      return `${seconds}秒后`;
+    }
+
+    function renderReminderList() {
+      const list = document.getElementById('reminder-list');
+      const activeReminders = reminders.filter(r => !r.triggered);
+      
+      if (activeReminders.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <p>暂无待提醒事项</p>
+            <p style="font-size: 14px; margin-top: 5px;">添加一个新的提醒开始吧！</p>
+          </div>
+        `;
+        return;
+      }
+
+      // 按提醒时间排序
+      activeReminders.sort((a, b) => a.actualRemindTime - b.actualRemindTime);
+
+      list.innerHTML = activeReminders.map(reminder => `
+        <div class="reminder-item ${!reminder.enabled ? 'disabled' : ''}" data-id="${reminder.id}">
+          <div class="reminder-header">
+            <span class="reminder-title">${escapeHtml(reminder.title)}</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="badge ${reminder.enabled ? 'badge-active' : 'badge-disabled'}">
+                ${reminder.enabled ? '已启用' : '已禁用'}
+              </span>
+              <div class="toggle-switch ${reminder.enabled ? 'on' : ''}" onclick="toggleReminder('${reminder.id}')"></div>
+            </div>
+          </div>
+          <div class="reminder-time">⏰ ${formatTime(reminder.datetime)} (${getOffsetText(reminder.offset)})</div>
+          ${reminder.content ? `<div class="reminder-content">📝 ${escapeHtml(reminder.content)}</div>` : ''}
+          <div class="reminder-meta">
+            <span>预计 ${getCountdown(reminder)}</span>
+            <span>提醒方式: ${reminder.notifySystem ? '通知' : ''}${reminder.notifySound && reminder.notifySystem ? '+' : ''}${reminder.notifySound ? '声音' : ''}</span>
+          </div>
+          <div class="reminder-actions">
+            <button class="btn btn-secondary" onclick="deleteReminder('${reminder.id}')">删除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderHistoryList() {
+      const list = document.getElementById('history-list');
+      
+      if (history.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <p>暂无提醒历史</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = history.map(reminder => `
+        <div class="reminder-item" data-id="${reminder.id}">
+          <div class="reminder-header">
+            <span class="reminder-title">${escapeHtml(reminder.title)}</span>
+            <span class="badge badge-triggered">已提醒</span>
+          </div>
+          <div class="reminder-time">⏰ ${formatTime(reminder.datetime)} (${getOffsetText(reminder.offset)})</div>
+          ${reminder.content ? `<div class="reminder-content">📝 ${escapeHtml(reminder.content)}</div>` : ''}
+          <div class="reminder-meta">
+            <span>提醒时间: ${reminder.triggeredAt ? formatTime(reminder.triggeredAt) : '-'}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 切换标签
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab:nth-child(${tab === 'active' ? 1 : 2})`).classList.add('active');
+      
+      document.getElementById('active-tab').style.display = tab === 'active' ? 'block' : 'none';
+      document.getElementById('history-tab').style.display = tab === 'history' ? 'block' : 'none';
+    }
+
+    // 请求通知权限
+    function requestNotificationPermission() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      init();
+      requestNotificationPermission();
+    });
+
+    // 确保后台也能正常检查
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        // 页面重新可见时立即检查
+        const now = Date.now();
+        reminders.forEach(reminder => {
+          if (reminder.enabled && !reminder.triggered && reminder.actualRemindTime <= now) {
+            triggerReminder(reminder);
+          }
+        });
+      }
+    });
+
+    // 注册Service Worker实现离线缓存
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(registration => {
+            console.log('Service Worker注册成功:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Service Worker注册失败:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
